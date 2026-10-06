@@ -20,15 +20,20 @@ FPS = 60
 # Game loop
 engine = GameEngine(WIDTH, HEIGHT)
 
+
 def main():
     running = True
+
     while running:
         SCREEN.fill(BLACK)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN:
-                engine.handle_keydown(event.key)
+
+            elif event.type == pygame.KEYDOWN:
+                if engine.handle_keydown(event.key):
+                    running = False
 
         engine.handle_input()
         engine.update()
@@ -38,6 +43,7 @@ def main():
         clock.tick(FPS)
 
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
