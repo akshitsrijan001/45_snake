@@ -1,3 +1,6 @@
+import math
+from array import array
+
 import pygame
 
 from .snake import Snake
@@ -29,7 +32,28 @@ class GameEngine:
         self.difficulty = "Medium"
         self.moves_per_second = self.difficulties[self.difficulty]
 
+        # Initialize mixer for sound effects
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+
+        self.eat_sound = self.create_tone(800, 0.08)
+        self.game_over_sound = self.create_tone(220, 0.25)
+
         self.reset_game()
+
+    def create_tone(self, frequency, duration):
+        sample_rate = 44100
+        samples = array("h")
+
+        for i in range(int(sample_rate * duration)):
+            value = int(
+                16000 * math.sin(
+                    2 * math.pi * frequency * i / sample_rate
+                )
+            )
+            samples.append(value)
+
+        return pygame.mixer.Sound(buffer=samples)
 
     def reset_game(self):
         self.snake = Snake(
@@ -106,17 +130,20 @@ class GameEngine:
             self.grid_height
         ):
             self.game_over = True
+            self.game_over_sound.play()
             return
 
         # Self collision
         if self.snake.collides_with_self():
             self.game_over = True
+            self.game_over_sound.play()
             return
 
         # Food collision
         if self.snake.head_rect().colliderect(self.food.rect()):
             self.snake.grow()
             self.score += 1
+            self.eat_sound.play()
             self.food.respawn(self.snake.body)
 
     def render(self, screen):
@@ -135,7 +162,7 @@ class GameEngine:
                 rect
             )
 
-        # Score
+        # Draw score
         score_text = self.font.render(
             f"Score: {self.score}",
             True,
@@ -143,7 +170,7 @@ class GameEngine:
         )
         screen.blit(score_text, (10, 10))
 
-        # Game Over menu
+        # Draw Game Over menu
         if self.game_over:
             title = self.font.render(
                 "GAME OVER",
